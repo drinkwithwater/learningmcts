@@ -354,7 +354,7 @@ class Node(object):
     def update(self, result):
         """
         Update this node - one additional visit and result additional wins.
-        Result must be from the viewpoint of playerJustmoved.
+        Result must be from the viewpoint of player_just_moved.
         """
         self.visits += 1
         self.wins += result
@@ -383,19 +383,19 @@ class Node(object):
         return s
 
 
-def uct(rootstate, itermax, verbose=False):
+def uct(root_state, iter_max, verbose=False):
     """
-    Conduct a UCT search for itermax iterations starting from rootstate.
-    Return the best move from the rootstate.
+    Conduct a UCT search for iter_max iterations starting from root_state.
+    Return the best move from the root_state.
     Assumes 2 alternating players (player 1 starts),
     with game results in the range [0.0, 1.0].
     """
 
-    rootnode = Node(state=rootstate)
+    root_node = Node(state=root_state)
 
-    for i in range(itermax):
-        node = rootnode
-        state = rootstate.clone()
+    for i in range(iter_max):
+        node = root_node
+        state = root_state.clone()
 
         # Select
         # node is fully expanded and non-terminal
@@ -413,7 +413,8 @@ def uct(rootstate, itermax, verbose=False):
 
         # Rollout - this can often be made orders of magnitude quicker
         # using a state.get_random_move() function
-        while state.get_moves():  # while state is non-terminal
+        # while state is non-terminal
+        while state.get_moves():
             state.do_move(random.choice(state.get_moves()))
 
         # Backpropagate
@@ -426,12 +427,12 @@ def uct(rootstate, itermax, verbose=False):
 
     # Output some information about the tree - can be omitted
     if verbose:
-        print(rootnode.tree_to_string(0))
+        print(root_node.tree_to_string(0))
     else:
-        print(rootnode.children_to_string())
+        print(root_node.children_to_string())
 
     # return the move that was most visited
-    return sorted(rootnode.child_nodes, key=lambda c: c.visits)[-1].move
+    return sorted(root_node.child_nodes, key=lambda c: c.visits)[-1].move
 
 
 def uct_play_game():
@@ -449,12 +450,12 @@ def uct_play_game():
     while state.get_moves():
         print(str(state))
         if state.player_just_moved == 1:
-            # play with values for itermax and verbose = True
+            # play with values for iter_max and verbose = True
             # Player 2
-            m = uct(rootstate=state, itermax=1000, verbose=False)
+            m = uct(root_state=state, iter_max=1000, verbose=False)
         else:
             # Player 1
-            m = uct(rootstate=state, itermax=100, verbose=False)
+            m = uct(root_state=state, iter_max=100, verbose=False)
         print('Best Move: ' + str(m) + '\n')
         state.do_move(m)
     if state.get_result(state.player_just_moved) == 1.0:
