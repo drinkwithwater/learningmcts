@@ -61,28 +61,29 @@ class CoinToss(object):
         Update a state by carrying out the given move.
         Must update player_just_moved.
         """
-        print("before", self)
         if self.player_just_moved is None:
             self.player_just_moved = 0
-            self.coin_toss = move
-        if self.player_just_moved == 0:
+            self.coin_toss = random.choice(["f", "b"])
+        elif self.player_just_moved == 0:
             self.player_just_moved = 1
             self.player1_sold = move
-        if self.player_just_moved == 1:
+        elif self.player_just_moved == 1:
             self.player_just_moved = 2
             self.player2_choice = move
-        print("after", self)
 
     def get_moves(self):
         """
         Get all possible moves from this state.
         """
         if self.player_just_moved is None:
-            return [0, 1]
+            return ["toss"]
         if self.player_just_moved == 0:
-            return [False, True]
+            return ["sold", "hold"]
         if self.player_just_moved == 1:
-            return [0, 1]
+            if self.player1_sold == "hold":
+                return [0, 1]
+            elif self.player1_sold == "sold":
+                return None
         if self.player_just_moved == 2:
             return None
 
@@ -91,32 +92,32 @@ class CoinToss(object):
         Get the game result from the viewpoint of playerjm.
         """
         # player 1 sold
-        if self.player_just_moved == 1 and self.player1_sold == True:
+        if self.player_just_moved == 1 and self.player1_sold == "sold":
             # player 1 sold yes
-            if self.coin_toss == 1:
+            if self.coin_toss == "f":
                 if playerjm == 1:
                     return 0.5
                 elif playerjm == 2:
                     return -0.5
-                elif playerjm == 0:
+                else:
                     return 0
             # player 1 sold no
-            elif self.coin_toss == 0:
+            elif self.coin_toss == "b":
                 if playerjm == 1:
                     return -0.5
                 elif playerjm == 2:
                     return 0.5
-                elif playerjm == 0:
+                else:
                     return 0
         # player 2 guess
-        elif self.player_just_moved == 2 and self.player1_sold == False:
+        elif self.player_just_moved == 2 and self.player1_sold == "hold":
             # player 2 guess right
             if self.coin_toss == self.player2_choice:
                 if playerjm == 1:
                     return -1
                 elif playerjm == 2:
                     return 1
-                elif playerjm == 0:
+                else:
                     return 0
             # player 2 guess wrong
             elif self.coin_toss != self.player2_choice:
@@ -124,7 +125,7 @@ class CoinToss(object):
                     return -1
                 elif playerjm == 2:
                     return 1
-                elif playerjm == 0:
+                else:
                     return 0
         else:
             print(self)
@@ -243,7 +244,6 @@ def uct(root_state, iter_max, verbose=False):
         # while state is non-terminal
         while state.get_moves():
             state.do_move(random.choice(state.get_moves()))
-        print("after get_moves", state)
 
         # Backpropagate
         # backpropagate from the expanded node and work back to the root node
@@ -260,6 +260,7 @@ def uct(root_state, iter_max, verbose=False):
         print(root_node.children_to_string())
 
     # return the move that was most visited
+    print(root_node.tree_to_string(0))
     return sorted(root_node.child_nodes, key=lambda c: c.visits)[-1].move
 
 
