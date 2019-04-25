@@ -6,20 +6,20 @@
 # and for the sake of clarity, the code is orders of magnitude
 # less efficient than it could be made, particularly by using a
 # state.GetRandomMove() or state.DoRandomRollout() function.
-# 
+#
 # Example GameState classes for Nim, OXO and Othello are included to
 # give some idea of how you can write your own GameState use UCT
 # in your 2-player game. Change the game to be played
 # in the UCTPlayGame() function at the bottom of the code.
-# 
+#
 # Written by Peter Cowling, Ed Powley,
 # Daniel Whitehouse (University of York, UK) September 2012.
 # Updated by SErAphLi to support python 3. Switch to Google python style.
-# 
+#
 # Licence is granted to freely use and distribute
 # for any sensible/legal purpose so long as this comment
 # remains in any distributed code.
-# 
+#
 # For more information about Monte Carlo Tree Search
 # check out our web site at www.mcts.ai
 
@@ -74,6 +74,70 @@ class GameState(object):
         Don't need this - but good style.
         """
         pass
+
+class NaivePokerState(object):
+    def __init__(self):
+        self.player_just_moved = 1
+        self.p1_pokers = [1,3,5]
+        self.p2_pokers = [2,4,6]
+        self.p1_winround = 0
+        self.p2_winround = 0
+        self.wait_compare = None
+
+    def clone(self):
+        st = NaivePokerState()
+        st.player_just_moved = self.player_just_moved
+        st.p1_pokers = self.p1_pokers.copy()
+        st.p2_pokers = self.p2_pokers.copy()
+        st.p1_winround = self.p1_winround
+        st.p2_winround = self.p2_winround
+        st.wait_compare = self.wait_compare
+        return st
+
+    def do_move(self, move):
+        self.player_just_moved = 3 - self.player_just_moved
+        if self.player_just_moved == 1:
+            self.p1_pokers.remove(move)
+            if not self.wait_compare:
+                self.wait_compare = move
+            else:
+                if self.wait_compare < move:
+                    self.p1_winround += 1
+                else:
+                    self.p2_winround += 1
+                self.wait_compare = None
+        else:
+            self.p2_pokers.remove(move)
+            if not self.wait_compare:
+                self.wait_compare = move
+            else:
+                if self.wait_compare < move:
+                    self.p2_winround += 1
+                else:
+                    self.p1_winround += 1
+                self.wait_compare = None
+
+    def get_moves(self):
+        if self.player_just_moved == 1:
+            return self.p2_pokers.copy()
+        else:
+            return self.p1_pokers.copy()
+
+    def get_result(self, playerjm):
+        if playerjm == 1:
+            if self.p1_winround > self.p2_winround:
+                return 1.0
+            else:
+                return 0.0
+        else:
+            if self.p2_winround > self.p1_winround:
+                return 1.0
+            else:
+                return 0.0
+
+    def __repr__(self):
+        return "(%s, %s, %s, %s)"%(self.p1_pokers, self.p2_pokers,self.p1_winround, self.p2_winround)
+
 
 
 class NimState(GameState):
@@ -446,7 +510,8 @@ def uct_play_game():
     # uncomment to play OXO
     # state = OXOState()
     # uncomment to play Nim with the given number of starting chips
-    state = NimState(15)
+    state = NaivePokerState()
+    #state = NimState(10)
     while state.get_moves():
         print(str(state))
         if state.player_just_moved == 1:
@@ -467,7 +532,7 @@ def uct_play_game():
 
 
 if __name__ == "__main__":
-    """ 
-    Play a single game to the end using UCT for both players. 
+    """
+    Play a single game to the end using UCT for both players.
     """
     uct_play_game()
