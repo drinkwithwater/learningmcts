@@ -95,9 +95,9 @@ class CoinToss(object):
             # player 2 guess wrong
             elif self.coin_toss != self.player2_choice:
                 if playerjm == 1:
-                    return -1
-                elif playerjm == 2:
                     return 1
+                elif playerjm == 2:
+                    return -1
                 else:
                     return 0
         else:
